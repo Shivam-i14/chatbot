@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 const db = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD || 'shivam@14',
   database: process.env.DB_NAME || 'chatbot'
 });
 
@@ -23,9 +23,9 @@ const db = mysql.createConnection({
 db.connect((err) => {
   if (err) {
     console.error('Database connection error:', err);
-  } else {
-    console.log('Connected to the database');
+    return;
   }
+  console.log('Connected to the database');
 });
 
 // API endpoint for sending messages
@@ -34,20 +34,21 @@ app.post('/api/message', (req, res) => {
 
   // Validate input
   if (!userMessage || typeof userMessage !== 'string') {
-    return res.status(400).json({ error: 'Invalid input' });
+    return res.status(400).json({ error: 'Invalid input. Please provide a valid message.' });
   }
 
   // Simple response logic
   let botResponse = 'I don\'t understand that.';
 
+  // Bot response logic based on user message
   if (userMessage.toLowerCase() === 'hii') {
     botResponse = 'Hello!';
   } else if (userMessage.toLowerCase() === 'how are you') {
-    botResponse = 'what is your first name';
-  } else if (userMessage.toLowerCase() === 'shivam'){
-    botResponse = 'last name';
-  } else if (userMessage.toLowerCase() === 'pathak'){
-    botResponse ='thankyou for response'
+    botResponse = 'I am fine, thank you!';
+  } else if (userMessage.toLowerCase() === 'shivam') {
+    botResponse = 'What is your last name?';
+  } else if (userMessage.toLowerCase() === 'pathak') {
+    botResponse = 'Thank you for your response!';
   }
 
   // Store the message and response in the database
@@ -55,11 +56,23 @@ app.post('/api/message', (req, res) => {
   db.query(query, [userMessage, botResponse], (err, result) => {
     if (err) {
       console.error('Error storing message:', err);
-      return res.status(500).json({ error: 'Database error' });
+      return res.status(500).json({ error: 'Database error. Unable to store the message.' });
     }
 
     // Send response back to the client
     res.json({ botResponse });
+  });
+});
+
+// API endpoint for fetching chat history
+app.get('/api/history', (req, res) => {
+  const query = 'SELECT * FROM chat_history ORDER BY created_at DESC LIMIT 5';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching history:', err);
+      return res.status(500).json({ error: 'Database error. Unable to fetch the history.' });
+    }
+    res.json(results);
   });
 });
 
